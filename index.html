@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #7ba8b7; /* This represents a light blue color, assumed to be 'wonderful' */
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        background-color: #dbd8b0;
+        border-bottom: 2px solid #180068;
+      }
+      .header img {
+        height: 50px; /* Adjust based on your logo's size */
+        margin-right: 20px;
+      }
+      .dropdown-container {
+        text-align:  left;
+        margin-top: 50px;
+      }
+      .dropdown-container select {
+        padding: 10px;
+        font-size: 17px;
+        border: 2px solid grey;
+        background: #f1f1f1;
+      }
+      .search-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+      }
+      .search-container input[type="text"] {
+        padding: 10px;
+        margin-right: 10px;
+        font-size: 17px;
+        border: 2px solid grey;
+        background: #f1f1f1;
+      }
+      .search-container button {
+        padding: 10px;
+        background: #218ef3;
+        color: white;
+        font-size: 17px;
+        border: 1px solid grey;
+        cursor: pointer;
+      }
+      .search-container button:hover {
+        background: #0b7dda;
+      }
+      .recent-searches {
+        margin-top: 20px;
+        text-align: center;
+      }
+      #map {
+        height: 400px; /* Adjust the size of the map */
+        width: 100%;
+        margin-top: 15px;
+      }
+      /* Your CSS styles here */
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img src=""C:\Users\joice\OneDrive\Desktop\New folder\Mihir_project\law.png"" alt="image" />
+      <!-- Replace your-logo-path.png with the actual path to your logo -->
+      <div style="display: flex; flex-direction: row; justify-content: space-between; align-items:center; width: 100%;">
+        <h1>JUDI-BUD</h1>
+        <!-- Replace with your company name -->
+      </div>
+    </div>
+
+    <div class="dropdown-container">
+      <select id="dropdownMenu">
+        <option value="option1">Criminal Laws</option>
+        <option value="option2">Civil Laws</option>
+        <option value="option3">Common Laws</option>
+        <option value="option4">Constitutional Laws</option>
+        <option value="option5">Statutory Law</option>
+        <option value="option5">Others..</option>
+      </select>
+    </div>
+
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Search.." />
+      <button onclick="addRecentSearch()">Submit</button>
+    </div>
+
+    <div class="recent-searches">
+      <p>Recent Searches:</p>
+      <ul id="recentSearchList">
+        <!-- Recent searches will be added here -->
+      </ul>
+    </div>
+
+    <div id="results">
+      <!-- API results will be displayed here -->
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"></script>
+    <script>
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyDSh3QsXBMWpIyf4jHAOWlNrmONScyFch0",
+        authDomain: "mdproject-f92b8.firebaseapp.com",
+        databaseURL:
+          "https://mdproject-f92b8-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "mdproject-f92b8",
+        storageBucket: "mdproject-f92b8.appspot.com",
+        messagingSenderId: "449646583369",
+        appId: "1:449646583369:web:264c06311c12d4a50ce998",
+        measurementId: "G-CTHWP4PV6W",
+      };
+      firebase.initializeApp(firebaseConfig);
+      firebase.analytics();
+      const dbRef = firebase.database().ref();
+    </script>
+    <script>
+      // Function to fetch data from Firebase Realtime Database
+      function fetchDataAndCache(query) {
+        const dbRef = firebase.database().ref(query);
+        return dbRef.once("value").then((snapshot) => {
+          const data = snapshot.val();
+          localStorage.setItem(query, JSON.stringify(data)); // Store data in localStorage
+          return data;
+        });
+      }
+
+      function fetchData(query) {
+        const resultsContainer = document.getElementById("results");
+        resultsContainer.innerHTML = ""; // Clear previous results
+
+        const cachedData = localStorage.getItem(query);
+        if (cachedData) {
+          const data = JSON.parse(cachedData);
+          const div = document.createElement("div");
+          div.textContent = `Data for '${query}': ${data}`;
+          resultsContainer.appendChild(div);
+        } else {
+          resultsContainer.innerHTML = `<p>No data available for key: ${query}</p>`;
+        }
+      }
+      // Function to handle the search
+      function handleSearch() {
+        const input = document
+          .getElementById("searchInput")
+          .value.trim()
+          .toUpperCase();
+        if (input === "A" || input === "B" || input === "C") {
+          fetchData(input);
+        } else {
+          document.getElementById("results").innerHTML =
+            "<p>Please enter A, B, or C.</p>";
+        }
+      }
+      function preloadInitialData() {
+        const preloadKeys = ["A", "B", "C"];
+        preloadKeys.forEach((key) => {
+          fetchDataAndCache(key)
+            .then(() => console.log(`Data for key ${key} loaded and cached.`))
+            .catch((error) =>
+              console.error(`Error loading data for key ${key}:`, error)
+            );
+        });
+      }
+
+      // Preload initial data when the page loads
+      window.onload = preloadInitialData;
+
+      // Function to add recent search
+      function addRecentSearch(input) {
+        const list = document.getElementById("recentSearchList");
+        const li = document.createElement("li");
+        li.textContent = input;
+        list.insertBefore(li, list.childNodes[0]);
+
+        // Remove the oldest search if more than 3 entries
+        if (list.getElementsByTagName("li").length > 3) {
+          list.removeChild(list.lastChild);
+        }
+      }
+    </script>
+    <script>
+      // Function to add recent search
+      function addRecentSearch() {
+        var input = document.getElementById("searchInput").value;
+        var list = document.getElementById("recentSearchList");
+
+        if (input.trim() !== "") {
+          var li = document.createElement("li");
+          var link = document.createElement("a");
+          link.href = "#"; // Set href attribute to '#' to make it clickable
+          link.textContent = input; // Set text content of the link
+          link.addEventListener("click", function () {
+            document.getElementById("searchInput").value = input; // Set input value when clicked
+            handleSearch();
+          });
+          li.appendChild(link);
+          list.insertBefore(li, list.childNodes[0]);
+
+          // Remove the oldest search if more than 3 entries
+          if (list.getElementsByTagName("li").length > 3) {
+            list.removeChild(list.lastChild);
+          }
+        }
+      }
+
+      // Function to handle search
+    </script>
+  </body>
+</html>
